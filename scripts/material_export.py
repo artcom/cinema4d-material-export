@@ -1,16 +1,16 @@
 import c4d
-from shutil import copyfile 
-from material_collector import collect_data, serialize_materials, Material
-from material_strategies import collect_material_info
+from shutil import copyfile
+from materialexport.material_collector import collect_data, serialize_materials, Material
+from materialexport.material_strategies import collect_material_info
 import json
 from os import path, makedirs
 from pprint import pprint
 
-EXPORT_FBX = 1026370 # magic number - not documented
+EXPORT_FBX = 1026370  # magic number - not documented
+
 
 def spawn_save_dialog():
-    print(c4d.FILESELECTTYPE_ANYTHING)
-    print(type(c4d.FILESELECTTYPE_ANYTHING))
+    '''Creates a save dialoge that only accepts JSON.'''
     path = c4d.storage.SaveDialog(
         c4d.FILESELECTTYPE_ANYTHING,
         "Material Export",
@@ -18,10 +18,14 @@ def spawn_save_dialog():
         doc[c4d.DOCUMENT_FILEPATH],
         (doc[c4d.DOCUMENT_NAME] + "_Materials")
     )
-    print(path)
     return path
 
+
 def copy_texture_files(serialized_materials, to_path):
+    '''By basically moving manually through the data structure, we copy all
+    textures to the location where the JSON + FBX will be and change all
+    filepaths to a local reference since all files are now findable in relative
+    '''
     s = serialized_materials
     for mat in s:
         tag_data = mat["tag_data"]
@@ -38,7 +42,9 @@ def copy_texture_files(serialized_materials, to_path):
             copyfile(filename, to_file_path)
             shader["filename"] = path.join("texture", real_filename)
 
+
 def serialize_object_w_materials(objects, materials):
+    '''Re-link all objects with material references.'''
     objs = []
     for obj in objects:
         source_tags = obj.GetTags()
@@ -49,46 +55,43 @@ def serialize_object_w_materials(objects, materials):
             c4d_mat = tag.GetMaterial()
             mat = [mat for mat in materials if mat == c4d_mat][0]
             mats.append(mat)
-        objs.append({"id": id(obj), "name": obj.GetName(), "materials": [mat.id for mat in mats]})
+        objs.append({"id": id(obj), "name": obj.GetName(),
+                     "materials": [mat.id for mat in mats]})
     return objs
 
+
 def main():
-    # here are only active materials
+    '''Main procedure for exporting:
+    - Generate a data structure that is serializable (and serialize)
+    - Copy all referenced textures in the scene
+    - Write out an FBX + JSON
+    '''
+    # collect everything
     objects, materials = collect_data(doc)
-    mats = serialize_materials(doc, materials)
-    objs = serialize_object_w_materials(objects, [Material(m, doc) for m in materials])
-    
+    # serialize materials
+    mats = serialize_materials(materials)
+    # based on that, we relink what materials are used on which objects
+    objs = serialize_object_w_materials(
+        objects, [Material(m, doc) for m in materials])
+
+    # figure out the filepath
     filepath = spawn_save_dialog()
     if filepath is None:
         print("No filepath given - aborting.")
         return
-
+    # and then copy textures
     copy_texture_files(mats, path.dirname(filepath))
+    # write out the json for material reconstruction
     with open(filepath, "w") as f:
         f.write(json.dumps({"materials": mats, "objects": objs}, indent=4))
+        print("INFO: Exported material JSON.")
+    # write out an FBX into the same folder
     if c4d.documents.SaveDocument(doc, path.splitext(filepath)[0] + ".fbx", c4d.SAVEDOCUMENTFLAGS_EXPORTDIALOG, 1026370):
         print("INFO: Exported FBX")
     else:
         print("ERR:  FBX not exported.")
-    
     print("Done.")
-    
-    
-    if False:
-        # here are ALL materials
-        materials = doc.GetMaterials()
-        cmaterials = doc.GetMaterials()
-        
-        conv_materials = [Material(mat, doc) for mat in materials]
-        conv_cmaterials = [Material(mat, doc) for mat in cmaterials]
-        
-        for m in conv_materials:
-            for cm in cmaterials:
-                print(m == cm)
-            print("-----------------------")
-            
-        mats = serialize_materials(doc, materials)
+
 
 if __name__ == '__main__':
     main()
- 

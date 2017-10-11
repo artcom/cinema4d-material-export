@@ -2,6 +2,15 @@ import c4d
 
 
 def collect_material_info(mat, name):
+    '''Collects Cinama4D standard material informations
+    - cannot gather data from custom material models
+
+    Args:
+        mat (c4d.TextureTag): input material with data attached
+        name (str): material channel in which attributes are gathered
+    Returns:
+        dict: containing all (queryable) attributes of a materials channel
+    '''
     name = name.lower()
     if name == 'luminance':
         return collect_luminance_info(mat)
@@ -35,6 +44,7 @@ def collect_material_info(mat, name):
         return collect_transparency_info(mat)
     else:
         print("There is no channel named [{}]!".format(name))
+        raise ValueError("Unknown channel named [{}]".format(name))
 
 
 def collect_luminance_info(mat):
@@ -45,6 +55,7 @@ def collect_luminance_info(mat):
         "texture_mixing": mat[c4d.MATERIAL_LUMINANCE_TEXTUREMIXING],
         "texture_strength": mat[c4d.MATERIAL_LUMINANCE_TEXTURESTRENGTH],
     }
+
 
 def collect_normal_info(mat):
     return {
@@ -60,6 +71,7 @@ def collect_normal_info(mat):
         "swap": mat[c4d.MATERIAL_NORMAL_SWAP],
     }
 
+
 def collect_bump_info(mat):
     return {
         "mip_falloff": mat[c4d.MATERIAL_BUMP_MIPFALLOFF],
@@ -68,6 +80,7 @@ def collect_bump_info(mat):
         "shader": mat[c4d.MATERIAL_BUMP_SHADER],
         "strength": mat[c4d.MATERIAL_BUMP_STRENGTH],
     }
+
 
 def collect_displacement_info(mat):
     return {
@@ -100,6 +113,7 @@ def collect_displacement_info(mat):
         "type_rgb_world": mat[c4d.MATERIAL_DISPLACEMENT_TYPE_RGBWORLD],
     }
 
+
 def collect_alpha_info(mat):
     return {
         "color": mat[c4d.MATERIAL_ALPHA_COLOR],
@@ -111,10 +125,12 @@ def collect_alpha_info(mat):
         "soft": mat[c4d.MATERIAL_ALPHA_SOFT],
     }
 
+
 def collect_any_info(mat):
     print("MATERIAL_ANY has no attributes.")
     return {
     }
+
 
 def collect_glow_info(mat):
     return {
@@ -128,6 +144,7 @@ def collect_glow_info(mat):
         "use_material_color": mat[c4d.MATERIAL_GLOW_USEMATERIALCOLOR],
     }
 
+
 def collect_diffusion_info(mat):
     return {
         "affect_luminance": mat[c4d.MATERIAL_DIFFUSION_AFFECT_LUMINANCE],
@@ -139,10 +156,12 @@ def collect_diffusion_info(mat):
         "texture_strength": mat[c4d.MATERIAL_DIFFUSION_TEXTURESTRENGTH],
     }
 
+
 def collect_specular_color_info(mat):
     print("SPECULAR_COLOR has no info - needs investigation")
     return {
     }
+
 
 def collect_reflection_info(mat):
     return {
@@ -171,6 +190,7 @@ def collect_reflection_info(mat):
         "use_bump": mat[c4d.MATERIAL_REFLECTION_USE_BUMP],
     }
 
+
 def collect_environment_info(mat):
     return {
         "brightness": mat[c4d.MATERIAL_ENVIRONMENT_BRIGHTNESS],
@@ -182,6 +202,7 @@ def collect_environment_info(mat):
         "tiles_x": mat[c4d.MATERIAL_ENVIRONMENT_TILESX],
         "tiles_y": mat[c4d.MATERIAL_ENVIRONMENT_TILESY],
     }
+
 
 def collect_color_info(mat):
     return {
@@ -197,6 +218,7 @@ def collect_color_info(mat):
         "texture_mixing": mat[c4d.MATERIAL_COLOR_TEXTUREMIXING],
         "texture_strength": mat[c4d.MATERIAL_COLOR_TEXTURESTRENGTH],
     }
+
 
 def collect_specular_info(mat):
     return {
@@ -215,12 +237,14 @@ def collect_specular_info(mat):
         "width": mat[c4d.MATERIAL_SPECULAR_WIDTH],
     }
 
+
 def collect_fog_info(mat):
     return {
         "brightness": mat[c4d.MATERIAL_FOG_BRIGHTNESS],
         "color": mat[c4d.MATERIAL_FOG_COLOR],
         "distance": mat[c4d.MATERIAL_FOG_DISTANCE],
     }
+
 
 def collect_transparency_info(mat):
     return {
